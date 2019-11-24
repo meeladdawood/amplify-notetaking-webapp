@@ -10,6 +10,7 @@ function App() {
   const [newNote, setNewNote] = useState('')
   const [notes, setNotes] = useState([]);
   const [updatedNoteId, setUpdatedNoteId] = useState(null);
+  const owner = 'D1636841@urhen.com'
 
   //ALL LifeCycle below
   useEffect(() => {
@@ -17,12 +18,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const onCreateNoteSubscription = API.graphql(graphqlOperation(onCreateNote)).subscribe({
+    const onCreateNoteSubscription = API.graphql(graphqlOperation(onCreateNote,{owner})).subscribe({
       next: noteData => {
         const newNote = noteData.value.data.onCreateNote;
-        const prevNotes = notes.filter(note => note.id !== newNote.id);
-        const updatedNotes = [...prevNotes,newNote];
-        setNotes(updatedNotes)
+
+        setNotes(prevNotes => {
+          const oldNotes = prevNotes.filter(note => note.id !== newNote.id)
+          return [...oldNotes, newNote]
+        })
         setNewNote('')
       },
     })
@@ -30,28 +33,33 @@ function App() {
   },[notes])
 
   useEffect(() => {
-    const onDeleteNoteSubscription = API.graphql(graphqlOperation(onDeleteNote)).subscribe({
+    const onDeleteNoteSubscription = API.graphql(graphqlOperation(onDeleteNote,{owner})).subscribe({
       next: noteData => {
         const deletedNoteId = noteData.value.data.onDeleteNote.id;
-        const updatedNotes = notes.filter(note => note.id !== deletedNoteId)
-        setNotes(updatedNotes)
-      },
+
+        setNotes(prevNotes => {
+          return prevNotes.filter(note => note.id !== deletedNoteId);
+        })
+      }
     })
     return () => onDeleteNoteSubscription.unsubscribe();
   },[notes])
 
   useEffect(() => {
-    const onUpdateNoteSubscription = API.graphql(graphqlOperation(onUpdateNote)).subscribe({
+    const onUpdateNoteSubscription = API.graphql(graphqlOperation(onUpdateNote,{owner})).subscribe({
       next: noteData => {;
 
         const updatedNote = noteData.value.data.onUpdateNote
-        const index = notes.findIndex(note => note.id === updatedNote.id)
-        const updatedNotes = [
-          ...notes.slice(0,index),
-          updatedNote,
-          ...notes.slice(index+1)
-        ];
-        setNotes(updatedNotes)
+
+        setNotes(prevNotes => {
+          const index = prevNotes.findIndex(note => note.id === updatedNote.id);
+          const updatedNotes = [
+            ...prevNotes.slice(0,index),
+            updatedNote,
+            ...prevNotes.slice(index+1)
+          ];
+          return updatedNotes
+        })
         setNewNote('')
         setUpdatedNoteId('')
       },
