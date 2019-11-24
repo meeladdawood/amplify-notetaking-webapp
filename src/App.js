@@ -1,12 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "aws-amplify-react";
+
 import { createNote, deleteNote} from "./graphql/mutations";
+import { listNotes } from './graphql/queries';
 
 function App() {
   const [newNote, setNewNote] = useState('')
   const [notes, setNotes] = useState([]);
 
+  //ALL LifeCycle below
+  
+
+  // ALL EVENT HANDLING BELOW
+  const handleAddNote = async (event) => {
+      event.preventDefault();
+      const input = {
+        note: newNote
+      }
+
+      const result = await API.graphql(graphqlOperation(createNote, {input}));
+      const newlyAddedNote = result.data.createNote;
+      const newListOfNotes = [newlyAddedNote, ...notes];
+      setNotes(newListOfNotes)
+      setNewNote('')
+  }
+
+  // ALL UI formatting below
   const renderedNotes = notes.map((note) => {
     return (
       <div
@@ -21,19 +41,6 @@ function App() {
       </div>
     )
   })
-
-  const handleAddNote = async (event) => {
-      event.preventDefault();
-      const input = {
-        note: newNote
-      }
-
-      const result = await API.graphql(graphqlOperation(createNote, {input}));
-      const newlyAddedNote = result.data.createNote;
-      const newListOfNotes = [newlyAddedNote, ...notes];
-      setNotes(newListOfNotes)
-      setNewNote('')
-  }
 
   return (
     <div className='flex flex-column items-center justify-center pa3 bg-washed-red'>
