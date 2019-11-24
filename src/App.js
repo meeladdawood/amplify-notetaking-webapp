@@ -10,20 +10,35 @@ function App() {
   const [notes, setNotes] = useState([]);
 
   //ALL LifeCycle below
-  
+  useEffect(() => {
+    onLoad();
+  }, [])
+
+  const onLoad = async () => {
+    const result = await API.graphql(graphqlOperation(listNotes))
+    setNotes(result.data.listNotes.items)
+  }
 
   // ALL EVENT HANDLING BELOW
   const handleAddNote = async (event) => {
       event.preventDefault();
-      const input = {
-        note: newNote
-      }
+      const input = { note: newNote }
 
       const result = await API.graphql(graphqlOperation(createNote, {input}));
       const newlyAddedNote = result.data.createNote;
       const newListOfNotes = [newlyAddedNote, ...notes];
       setNotes(newListOfNotes)
       setNewNote('')
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    const input = { id: noteId }
+
+    const result = await API.graphql(graphqlOperation(deleteNote, {input}))
+    const deletedNoteId = result.data.deleteNote.id;
+
+    const updatedNotes = notes.filter((note)=> note.id !== deletedNoteId)
+    setNotes(updatedNotes);
   }
 
   // ALL UI formatting below
@@ -35,7 +50,9 @@ function App() {
         <li className="pa1 f3">
           {note.note}
         </li>
-        <button className="bg-transparent bn f4">
+        <button 
+        className="bg-transparent bn f4"
+        onClick={()=>handleDeleteNote(note.id)}>
           <span> &times;</span>
         </button>
       </div>
