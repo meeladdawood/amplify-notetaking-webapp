@@ -82,18 +82,18 @@ function App() {
       handleUpdateExistingNote(updatedNoteId)
     } else {
       const input = { note: newNote }
-      API.graphql(graphqlOperation(createNote, { input }));
+      await API.graphql(graphqlOperation(createNote, { input }));
     }
   }
 
   const handleDeleteNote = async (noteId) => {
     const input = { id: noteId }
-    API.graphql(graphqlOperation(deleteNote, { input }))
+    await API.graphql(graphqlOperation(deleteNote, { input }))
   }
 
   const handleUpdateExistingNote = async (noteId) => {
     const input = { id: updatedNoteId, note: newNote }
-    API.graphql(graphqlOperation(updateNote, { input }));
+    await API.graphql(graphqlOperation(updateNote, { input }));
   }
 
   const handleUpdateNote = ({note, id}) => {
