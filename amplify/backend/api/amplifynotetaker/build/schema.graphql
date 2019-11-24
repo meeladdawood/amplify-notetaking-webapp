@@ -1,6 +1,7 @@
 type Note {
   id: ID!
   note: String!
+  owner: String
 }
 
 enum ModelSortDirection {
@@ -102,7 +103,7 @@ type Mutation {
 }
 
 type Subscription {
-  onCreateNote: Note @aws_subscribe(mutations: ["createNote"])
-  onUpdateNote: Note @aws_subscribe(mutations: ["updateNote"])
-  onDeleteNote: Note @aws_subscribe(mutations: ["deleteNote"])
+  onCreateNote(owner: String!): Note @aws_subscribe(mutations: ["createNote"])
+  onUpdateNote(owner: String!): Note @aws_subscribe(mutations: ["updateNote"])
+  onDeleteNote(owner: String!): Note @aws_subscribe(mutations: ["deleteNote"])
 }
