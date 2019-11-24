@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "aws-amplify-react";
 
-import { createNote, deleteNote } from "./graphql/mutations";
+import { createNote, deleteNote, updateNote } from "./graphql/mutations";
 import { listNotes } from './graphql/queries';
 
 function App() {
   const [newNote, setNewNote] = useState('')
   const [notes, setNotes] = useState([]);
+  const [updatedNoteId, setUpdatedNoteId] = useState(null);
 
   //ALL LifeCycle below
   useEffect(() => {
@@ -19,16 +20,30 @@ function App() {
     setNotes(result.data.listNotes.items)
   }
 
+  //ALL HELPER FUNCS
+  const hasExistingNote = () => {
+    if (updatedNoteId) {
+      const isNote = notes.findIndex(note => note.id === updatedNoteId) > -1
+      return isNote;
+    }
+    return false;
+  }
+
   // ALL EVENT HANDLING BELOW
   const handleAddNote = async (event) => {
     event.preventDefault();
-    const input = { note: newNote }
 
-    const result = await API.graphql(graphqlOperation(createNote, { input }));
-    const newlyAddedNote = result.data.createNote;
-    const newListOfNotes = [newlyAddedNote, ...notes];
-    setNotes(newListOfNotes)
-    setNewNote('')
+    if(hasExistingNote()) {
+      handleUpdateExistingNote(updatedNoteId)
+    } else {
+      const input = { note: newNote }
+
+      const result = await API.graphql(graphqlOperation(createNote, { input }));
+      const newlyAddedNote = result.data.createNote;
+      const newListOfNotes = [newlyAddedNote, ...notes];
+      setNotes(newListOfNotes)
+      setNewNote('')
+    }
   }
 
   const handleDeleteNote = async (noteId) => {
@@ -41,13 +56,35 @@ function App() {
     setNotes(updatedNotes);
   }
 
+  const handleUpdateExistingNote = async (noteId) => {
+    const input = { id: updatedNoteId, note: newNote }
+
+    const result = await API.graphql(graphqlOperation(updateNote, { input }));
+    const updatedNote = result.data.updateNote
+    const index = notes.findIndex(note => note.id === updatedNote.id)
+    const updatedNotes = [
+      ...notes.slice(0,index),
+      updatedNote,
+      ...notes.slice(index+1)
+    ];
+    setNotes(updatedNotes)
+    setNewNote('')
+    setUpdatedNoteId('')
+  }
+
+  const handleUpdateNote = ({note, id}) => {
+    setNewNote(note);
+    setUpdatedNoteId(id);
+
+  }
+
   // ALL UI formatting below
   const renderedNotes = notes.map((note) => {
     return (
       <div
         key={note.id}
         className='flex items-center'>
-        <li className="pa1 f3">
+        <li className="pa1 f3" onClick={() => handleUpdateNote(note)}>
           {note.note}
         </li>
         <button
@@ -72,7 +109,7 @@ function App() {
         <button
           className="pa2 f4"
           type='submit'>
-          Add Note
+          {updatedNoteId ? 'Update Note' : 'Add Note'}
           </button>
       </form>
       {renderedNotes}
